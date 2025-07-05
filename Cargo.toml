@@ -1,0 +1,12 @@
+[package]
+name = "token_bucket"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.4"
+axum-server = "0.7.2"
+chrono = "0.4.41"
+spawn_timeout = "0.1.0"
+time_duration_api = "0.1.9"
+tokio = { version = "1.46.0", features = ["full"] }
