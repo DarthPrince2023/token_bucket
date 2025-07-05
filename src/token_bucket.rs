@@ -25,26 +25,36 @@ impl TokenBucket {
         // Next calculate how many tokens were created since the last refill time
         let rate: i64 = self.refill_rate;
         let tokens_created = time / rate;
+
+        // Calculate how much room is left in the bucket based on how many tokens have been used
+        let capacity = self.max_tokens - self.current_counter;
+
+        // Keep track of how many tokens created
+        let mut generated_token_counter = 0;
+        
+        // Never add more tokens than allowed
+        if tokens_created > capacity {
+            // Add the allowed tokens and update refill time
+            self.current_counter += capacity;
+            generated_token_counter = capacity;
+        } else {
+            // Push the created tokens and update refill time
+            self.current_counter += tokens_created;
+            generated_token_counter = tokens_created;
+        }
         
         // Check that we have enough tokens left
         if self.current_counter == 0 {
             // We do not have enough tokens to process this request
             return StatusCode::SERVICE_UNAVAILABLE;
         }
+
+        if generated_token_counter > 0 {
+            self.last_fill_time = Utc::now();
+        }
         
         // Drop a token from the bucket
         self.current_counter -= 1;
-
-        // Calculate how much room is left in the bucket based on how many tokens have been used
-        let capacity = self.max_tokens - self.current_counter;
-
-        // Never add more tokens than allowed
-        if tokens_created > capacity {
-            self.current_counter += capacity;
-        }
-
-        // Update the last refill time
-        self.last_fill_time = Utc::now();
 
         // Everything went well
         StatusCode::OK
